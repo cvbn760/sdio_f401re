@@ -1,4 +1,0 @@
-../Core/comp/tasks_cmp.c:27:16:init_tasks	4
-../Core/comp/tasks_cmp.c:53:13:init_gpio_task	1
-../Core/comp/tasks_cmp.c:57:13:init_ind_task	1
-../Core/comp/tasks_cmp.c:65:13:init_i2c_task	3

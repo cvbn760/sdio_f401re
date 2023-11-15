@@ -1,4 +1,0 @@
-../Core/comp/indication.c:11:13:start_indication	16	static
-../Core/comp/indication.c:23:13:firmware_update	8	static
-../Core/comp/indication.c:34:13:set_indication_task	16	static
-../Core/comp/indication.c:39:13:reset_task	8	static
