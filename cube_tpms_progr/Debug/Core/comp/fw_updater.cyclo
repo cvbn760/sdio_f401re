@@ -1,0 +1,3 @@
+../Core/comp/fw_updater.c:18:16:reset_to_factory	3
+../Core/comp/fw_updater.c:30:16:update_firmware	3
+../Core/comp/fw_updater.c:70:16:prep_firmware	1

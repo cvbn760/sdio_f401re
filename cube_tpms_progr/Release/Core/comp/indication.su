@@ -1,0 +1,2 @@
+../Core/comp/indication.c:11:13:start_indication	8	static
+../Core/comp/indication.c:34:13:set_indication_task	8	static

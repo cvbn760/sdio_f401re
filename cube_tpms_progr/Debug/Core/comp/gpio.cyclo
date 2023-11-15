@@ -1,0 +1,11 @@
+../Core/comp/gpio.c:37:16:gpio_start	2
+../Core/comp/gpio.c:45:16:switch_mode_sda_scl	3
+../Core/comp/gpio.c:82:13:gpio_watcher	2
+../Core/comp/gpio.c:88:13:gpio_stop	1
+../Core/comp/gpio.c:92:16:init_io	1
+../Core/comp/gpio.c:120:13:set_power	1
+../Core/comp/gpio.c:124:13:set_sda	2
+../Core/comp/gpio.c:129:13:set_scl	2
+../Core/comp/gpio.c:134:22:get_current_green_led	1
+../Core/comp/gpio.c:138:13:set_green_led	1
+../Core/comp/gpio.c:142:22:get_current_button_state	1
