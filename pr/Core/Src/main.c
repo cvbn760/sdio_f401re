@@ -175,6 +175,21 @@ int main(void)
 	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
   }
 
+  char line[200];
+  fr = f_open(&fil, "test.txt", FA_READ);
+  print_err(fr);
+
+
+
+  char readBuff[128];
+  memset(&readBuff[0], 0x00, 128);
+  unsigned int bytesRead;
+  fr = f_read(&fil, readBuff, sizeof(readBuff)-1, &bytesRead);
+  print_err(fr);
+  printf("%s\n ", readBuff);
+
+  f_close(&fil);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
