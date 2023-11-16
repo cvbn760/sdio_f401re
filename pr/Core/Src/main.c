@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "fatfs.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -43,12 +43,23 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
-SD_HandleTypeDef hsd;
-DMA_HandleTypeDef hdma_sdio_rx;
-DMA_HandleTypeDef hdma_sdio_tx;
 
 UART_HandleTypeDef huart2;
 
+/* Definitions for sd_task */
+osThreadId_t sd_taskHandle;
+const osThreadAttr_t sd_task_attributes = {
+  .name = "sd_task",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityRealtime,
+};
+/* Definitions for init_task */
+osThreadId_t init_taskHandle;
+const osThreadAttr_t init_task_attributes = {
+  .name = "init_task",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -56,80 +67,20 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
+
 static void MX_USART2_UART_Init(void);
-static void MX_SDIO_SD_Init(void);
+
 static void MX_I2C1_Init(void);
+void start_sd_task(void *argument);
+void start_init_task(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void print_err(FRESULT fr){
-	switch(fr){
-	case FR_OK:				/* (0) Succeeded */
-		printf("SD: FR_OK \n");
-		break;
-	case FR_DISK_ERR:			/* (1) A hard error occurred in the low level disk I/O layer */
-		printf("SD: FR_DISK_ERR \n");
-		break;
-	case FR_INT_ERR:				/* (2) Assertion failed */
-		printf("SD: FR_INT_ERR \n");
-		break;
-	case FR_NOT_READY:			/* (3) The physical drive cannot work */
-		printf("SD: FR_NOT_READY \n");
-		break;
-	case FR_NO_FILE:				/* (4) Could not find the file */
-		printf("SD: FR_NO_FILE \n");
-		break;
-	case FR_NO_PATH:				/* (5) Could not find the path */
-		printf("SD: FR_NO_PATH \n");
-		break;
-	case FR_INVALID_NAME:		/* (6) The path name format is invalid */
-		printf("SD: FR_INVALID_NAME \n");
-		break;
-	case FR_DENIED:				/* (7) Access denied due to prohibited access or directory full */
-		printf("SD: FR_DENIED \n");
-		break;
-	case FR_EXIST:				/* (8) Access denied due to prohibited access */
-		printf("SD: FR_EXIST \n");
-		break;
-	case FR_INVALID_OBJECT:		/* (9) The file/directory object is invalid */
-		printf("SD: FR_INVALID_OBJECT \n");
-		break;
-	case FR_WRITE_PROTECTED:		/* (10) The physical drive is write protected */
-		printf("SD: FR_WRITE_PROTECTED \n");
-		break;
-	case FR_INVALID_DRIVE:		/* (11) The logical drive number is invalid */
-		printf("SD: FR_INVALID_DRIVE \n");
-		break;
-	case FR_NOT_ENABLED:			/* (12) The volume has no work area */
-		printf("SD: FR_NOT_ENABLED \n");
-		break;
-	case FR_NO_FILESYSTEM:		/* (13) There is no valid FAT volume */
-		printf("SD: FR_NO_FILESYSTEM \n");
-		break;
-	case FR_MKFS_ABORTED:		/* (14) The f_mkfs() aborted due to any problem */
-		printf("SD: FR_MKFS_ABORTED \n");
-		break;
-	case FR_TIMEOUT:				/* (15) Could not get a grant to access the volume within defined period */
-		printf("SD: FR_TIMEOUT \n");
-		break;
-	case FR_LOCKED:				/* (16) The operation is rejected according to the file sharing policy */
-		printf("SD: FR_LOCKED \n");
-		break;
-	case FR_NOT_ENOUGH_CORE:		/* (17) LFN working buffer could not be allocated */
-		printf("SD: FR_NOT_ENOUGH_CORE \n");
-		break;
-	case FR_TOO_MANY_OPEN_FILES:	/* (18) Number of open files > _FS_LOCK */
-		printf("SD: FR_TOO_MANY_OPEN_FILES \n");
-		break;
-	case FR_INVALID_PARAMETER:	/* (19) Given parameter is invalid */
-		printf("SD: FR_INVALID_PARAMETER \n");
-		break;
-	}
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -138,68 +89,13 @@ static void print_err(FRESULT fr){
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
+	HAL_Init();
+    SystemClock_Config();
+	MX_USART2_UART_Init();
+    if(init_tasks()) printf("Tasks was initialized\n");
+	if(i2c_init()) printf("I2C1 was init success\n");
 
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_USART2_UART_Init();
-  MX_SDIO_SD_Init();
-  MX_FATFS_Init();
-  MX_I2C1_Init();
-  /* USER CODE BEGIN 2 */
-
-  FATFS FatFs;
-  FIL fil;
-  FRESULT fr;
-
-  fr = f_mount(&FatFs, "", 1);
-  print_err(fr);
-  if(fr == FR_OK){
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-  } else {
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-  }
-
-  fr = f_open(&fil, "senasic_app_snp736.bin", FA_READ);
-  print_err(fr);
-
-  unsigned int bytesRead;
-  char readBuff[128];
-  while(f_read(&fil, readBuff, 1, &bytesRead) == FR_OK){
-	  printf("%02x\n ", readBuff[0]);
-  }
-//  char readBuff[128];
-//  memset(&readBuff[0], 0x00, 128);
-//  unsigned int bytesRead;
-//  fr = f_read(&fil, readBuff, sizeof(readBuff)-1, &bytesRead);
-//  print_err(fr);
-//  printf("%s\n ", readBuff);
-
-  f_close(&fil);
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	osKernelStart();
   while (1)
   {
     /* USER CODE END WHILE */
@@ -291,33 +187,6 @@ static void MX_I2C1_Init(void)
 
 }
 
-/**
-  * @brief SDIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_SDIO_SD_Init(void)
-{
-
-  /* USER CODE BEGIN SDIO_Init 0 */
-
-  /* USER CODE END SDIO_Init 0 */
-
-  /* USER CODE BEGIN SDIO_Init 1 */
-
-  /* USER CODE END SDIO_Init 1 */
-  hsd.Instance = SDIO;
-  hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
-  hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
-  hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
-  hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
-  hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd.Init.ClockDiv = 0;
-  /* USER CODE BEGIN SDIO_Init 2 */
-
-  /* USER CODE END SDIO_Init 2 */
-
-}
 
 /**
   * @brief USART2 Initialization Function
@@ -349,25 +218,6 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
-
-}
-
-/**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA2_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA2_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-  /* DMA2_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 
 }
 
@@ -421,6 +271,37 @@ int _write(int file, char *ptr, int len)
 	return len;
 }
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_start_sd_task */
+/**
+  * @brief  Function implementing the sd_task thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_start_sd_task */
+void start_sd_task(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+
+
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_start_init_task */
+/**
+* @brief Function implementing the init_task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_start_init_task */
+void start_init_task(void *argument)
+{
+  /* USER CODE BEGIN start_init_task */
+  /* Infinite loop */
+ sd_taskHandle = osThreadNew(start_sd_task, NULL, &sd_task_attributes);
+  /* USER CODE END start_init_task */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

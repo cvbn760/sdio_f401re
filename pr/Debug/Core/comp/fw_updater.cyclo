@@ -1,0 +1,6 @@
+../Core/comp/fw_updater.c:23:16:reset_to_factory	3
+../Core/comp/fw_updater.c:35:16:update_firmware	3
+../Core/comp/fw_updater.c:107:17:MX_SDIO_SD_Init	1
+../Core/comp/fw_updater.c:118:16:prep_firmware	1
+../Core/comp/fw_updater.c:142:13:print_err	21
+../Core/comp/fw_updater.c:210:13:MX_DMA_Init	1

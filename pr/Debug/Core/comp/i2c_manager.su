@@ -1,0 +1,6 @@
+../Core/comp/i2c_manager.c:5:16:i2c_init	8	static
+../Core/comp/i2c_manager.c:25:6:print_hex	80	dynamic
+../Core/comp/i2c_manager.c:33:16:i2c_read_data_from_device	40	static
+../Core/comp/i2c_manager.c:54:16:i2c_send_data_to_device	24	static
+../Core/comp/i2c_manager.c:64:16:has_device	24	static
+../Core/comp/i2c_manager.c:76:13:scan_bus_and_print	16	static
