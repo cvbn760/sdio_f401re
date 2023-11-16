@@ -8,15 +8,15 @@
 
 // GPIO task
 static osThreadId_t gpio_taskHandle;
-static const osThreadAttr_t gpio_task_attributes = {.name = "gpio_task", .stack_size = 2048, .priority = (osPriority_t) osPriorityRealtime,};
+static const osThreadAttr_t gpio_task_attributes = {.name = "gpio_task", .stack_size = 2048, .priority = (osPriority_t) osPriorityBelowNormal};
 
 // I2C task
 static osThreadId_t i2c_taskHandle;
-static const osThreadAttr_t i2c_task_attributes = {.name = "i2c_task", .stack_size = 8192, .priority = (osPriority_t) osPriorityRealtime,};
+static const osThreadAttr_t i2c_task_attributes = {.name = "i2c_task", .stack_size = 8192, .priority = (osPriority_t) osPriorityBelowNormal};
 
 // Indication task
 static osThreadId_t ind_taskHandle;
-static const osThreadAttr_t ind_task_attributes = {.name = "ind_task", .stack_size = 2048, .priority = (osPriority_t) osPriorityRealtime,};
+static const osThreadAttr_t ind_task_attributes = {.name = "ind_task", .stack_size = 2048, .priority = (osPriority_t) osPriorityBelowNormal};
 
 
 static void init_gpio_task(void *argument);

@@ -1,6 +1,6 @@
-../Core/comp/fw_updater.c:23:16:reset_to_factory	16	static
-../Core/comp/fw_updater.c:35:16:update_firmware	8448	static
-../Core/comp/fw_updater.c:107:17:MX_SDIO_SD_Init	8	static
-../Core/comp/fw_updater.c:118:16:prep_firmware	8	static
-../Core/comp/fw_updater.c:142:13:print_err	16	static
-../Core/comp/fw_updater.c:210:13:MX_DMA_Init	16	static
+../Core/comp/fw_updater.c:29:16:reset_to_factory	16	static
+../Core/comp/fw_updater.c:41:16:update_firmware	144	static
+../Core/comp/fw_updater.c:111:17:MX_SDIO_SD_Init	8	static
+../Core/comp/fw_updater.c:122:16:prep_firmware	8	static
+../Core/comp/fw_updater.c:146:13:print_err	16	static
+../Core/comp/fw_updater.c:214:13:MX_DMA_Init	16	static

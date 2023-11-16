@@ -2,11 +2,17 @@
 #include "gpio.h"
 #include "i2c_manager.h"
 #include "fatfs.h"
+#include "string.h"
+#include "stdio.h"
 
 #define SNP_ADDR 0x36
 #define LOCKBYTE_ONE_ADDR 0x42FF
 #define LOCKBYTE_THREE_ADDR 0x407F
 #define UNLOCK_AREA 0xFF
+
+FATFS FatFs;
+FIL fil;
+FRESULT fr;
 
 static uint8_t sensor_number = 2;
 SD_HandleTypeDef hsd;
@@ -45,15 +51,13 @@ extern BOOLEAN update_firmware(void){
     MX_FATFS_Init();
 
 
-	 FATFS FatFs;
-    FIL fil;
-FRESULT fr;
 
 		  fr = f_mount(&FatFs, "", 1);
-		  print_err(fr);
+		  printf("%d\n", fr);
+		//  print_err(fr);
 
 		  fr = f_open(&fil, "senasic_app_snp736.bin", FA_READ);
-		  print_err(fr);
+		  printf("%d\n", fr);
 
 		  unsigned int bytesRead;
 		  char readBuff[128];
