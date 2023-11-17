@@ -14,8 +14,8 @@ static FATFS FatFs;
 static FIL fil;
 static FRESULT fr;
 static unsigned int bytesRead;
-static char readBuff[100];
-char content[100];
+static char *readBuff;
+static char *content;
 static UINT16 crc16;
 
 static uint8_t sensor_number = 2;
@@ -38,6 +38,8 @@ static BOOLEAN finish_firmware(void);
 
 static BOOLEAN init_sd(void){
 	if(is_init == FALSE){
+	   readBuff = (char*) malloc(100);
+	   content = (char*) malloc(100);
 	   MX_DMA_Init();
 	   MX_SDIO_SD_Init();
 	   MX_FATFS_Init();
@@ -69,7 +71,7 @@ static BOOLEAN read_sd_and_firmware(void){
 	  memset(&content[0], 0x00, 100);
 	  while(f_read(&fil, readBuff, 64, &bytesRead) == FR_OK){
 		  if(bytesRead == 0) goto down; // Если ничего не прочитано
-
+          osDelay(20);
 		  // Добавляем адрес регистра
 		  content[0] = f_addr >> 8;
 		  content[1] = f_addr;
