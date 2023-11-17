@@ -6,6 +6,7 @@
 "./Core/Src/sysmem.o"
 "./Core/Src/system_stm32f4xx.o"
 "./Core/Startup/startup_stm32f401retx.o"
+"./Core/comp/crc16i.o"
 "./Core/comp/fw_updater.o"
 "./Core/comp/gpio.o"
 "./Core/comp/i2c_manager.o"

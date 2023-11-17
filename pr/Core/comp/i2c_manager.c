@@ -13,7 +13,6 @@ extern BOOLEAN i2c_init(void){
 	  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
 	  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 
-
 	  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
 	  {
 	    return FALSE;

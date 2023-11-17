@@ -1,0 +1,4 @@
+../Core/comp/crc16i.c:19:9:reverse_bits	16	static
+../Core/comp/crc16i.c:24:10:reverse_word	24	static
+../Core/comp/crc16i.c:28:10:crc16_common	32	static
+../Core/comp/crc16i.c:72:10:crc16_augccitt_false	32	static

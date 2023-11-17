@@ -5,6 +5,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Core/comp/crc16i.c \
 ../Core/comp/fw_updater.c \
 ../Core/comp/gpio.c \
 ../Core/comp/i2c_manager.c \
@@ -12,6 +13,7 @@ C_SRCS += \
 ../Core/comp/tasks_cmp.c 
 
 OBJS += \
+./Core/comp/crc16i.o \
 ./Core/comp/fw_updater.o \
 ./Core/comp/gpio.o \
 ./Core/comp/i2c_manager.o \
@@ -19,6 +21,7 @@ OBJS += \
 ./Core/comp/tasks_cmp.o 
 
 C_DEPS += \
+./Core/comp/crc16i.d \
 ./Core/comp/fw_updater.d \
 ./Core/comp/gpio.d \
 ./Core/comp/i2c_manager.d \
@@ -33,7 +36,7 @@ Core/comp/%.o Core/comp/%.su Core/comp/%.cyclo: ../Core/comp/%.c Core/comp/subdi
 clean: clean-Core-2f-comp
 
 clean-Core-2f-comp:
-	-$(RM) ./Core/comp/fw_updater.cyclo ./Core/comp/fw_updater.d ./Core/comp/fw_updater.o ./Core/comp/fw_updater.su ./Core/comp/gpio.cyclo ./Core/comp/gpio.d ./Core/comp/gpio.o ./Core/comp/gpio.su ./Core/comp/i2c_manager.cyclo ./Core/comp/i2c_manager.d ./Core/comp/i2c_manager.o ./Core/comp/i2c_manager.su ./Core/comp/indication.cyclo ./Core/comp/indication.d ./Core/comp/indication.o ./Core/comp/indication.su ./Core/comp/tasks_cmp.cyclo ./Core/comp/tasks_cmp.d ./Core/comp/tasks_cmp.o ./Core/comp/tasks_cmp.su
+	-$(RM) ./Core/comp/crc16i.cyclo ./Core/comp/crc16i.d ./Core/comp/crc16i.o ./Core/comp/crc16i.su ./Core/comp/fw_updater.cyclo ./Core/comp/fw_updater.d ./Core/comp/fw_updater.o ./Core/comp/fw_updater.su ./Core/comp/gpio.cyclo ./Core/comp/gpio.d ./Core/comp/gpio.o ./Core/comp/gpio.su ./Core/comp/i2c_manager.cyclo ./Core/comp/i2c_manager.d ./Core/comp/i2c_manager.o ./Core/comp/i2c_manager.su ./Core/comp/indication.cyclo ./Core/comp/indication.d ./Core/comp/indication.o ./Core/comp/indication.su ./Core/comp/tasks_cmp.cyclo ./Core/comp/tasks_cmp.d ./Core/comp/tasks_cmp.o ./Core/comp/tasks_cmp.su
 
 .PHONY: clean-Core-2f-comp
 
