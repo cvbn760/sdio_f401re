@@ -4,7 +4,7 @@ static I2C_HandleTypeDef hi2c1;
 
 extern BOOLEAN i2c_init(void){
 	  hi2c1.Instance = I2C1;
-	  hi2c1.Init.ClockSpeed = 100000;
+	  hi2c1.Init.ClockSpeed = 400000;
 	  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
 	  hi2c1.Init.OwnAddress1 = 0x0;
 	  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;

@@ -81,7 +81,7 @@ static BOOLEAN read_sd_and_firmware(void){
 		  crc16 = crc16_augccitt_false(&content[0], bytesRead + 2);
 		  content[bytesRead + 2] = crc16 >> 8;
 		  content[bytesRead + 3] = crc16;
-		//  osDelay(100);
+		  osDelay(100);
 
 		  // Отправка
 		  if(!i2c_send_data_to_device(0x36, content, bytesRead + 4)) {
@@ -92,8 +92,8 @@ static BOOLEAN read_sd_and_firmware(void){
 		  f_addr += bytesRead;
 
 
-		  memset(&readBuff[0], 0x00, 100);
-		  memset(&content[0], 0x00, 100);
+		//  memset(&readBuff[0], 0x00, 100);
+		//  memset(&content[0], 0x00, 100);
 	  }
 	  down:
 
