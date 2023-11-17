@@ -34,6 +34,7 @@ static uint16_t f_addr = 0x0000;
 static BOOLEAN is_init = FALSE;
 static BOOLEAN init_sd(void);
 static BOOLEAN read_sd_and_firmware(void);
+static BOOLEAN check_firmware(void);
 static BOOLEAN finish_firmware(void);
 
 static BOOLEAN init_sd(void){
@@ -47,6 +48,8 @@ static BOOLEAN init_sd(void){
 	is_init = TRUE;
 	return TRUE;
 }
+
+
 
 static BOOLEAN read_sd_and_firmware(void){
 	  f_addr = 0x0000; // Сброс адреса регистров
@@ -71,7 +74,7 @@ static BOOLEAN read_sd_and_firmware(void){
 	  memset(&content[0], 0x00, 100);
 	  while(f_read(&fil, readBuff, 64, &bytesRead) == FR_OK){
 		  if(bytesRead == 0) goto down; // Если ничего не прочитано
-          osDelay(20);
+        //  osDelay(20);
 		  // Добавляем адрес регистра
 		  content[0] = f_addr >> 8;
 		  content[1] = f_addr;
@@ -92,8 +95,8 @@ static BOOLEAN read_sd_and_firmware(void){
 		  f_addr += bytesRead;
 
 
-		//  memset(&readBuff[0], 0x00, 100);
-		//  memset(&content[0], 0x00, 100);
+		  memset(&readBuff[0], 0x00, 100);
+		  memset(&content[0], 0x00, 100);
 	  }
 	  down:
 
@@ -103,14 +106,58 @@ static BOOLEAN read_sd_and_firmware(void){
       return TRUE;
 }
 
+static BOOLEAN check_firmware(void){
+	 f_addr = 0x0000; // Сброс адреса регистров
+
+	 // Подключение флешки
+     fr = f_mount(&FatFs, "", 1);
+	 if(fr != FR_OK){
+		printf("SD card detection error %d\n", fr);
+		return FALSE;
+     }
+     printf("SD card detected\n");
+
+	 // Открытие файла
+     fr = f_open(&fil, "senasic_app_snp736.bin", FA_READ);
+	 if(fr != FR_OK){
+	     printf("Can't open file >senasic_app_snp736.bin<  %d\n", fr);
+		 return FALSE;
+	  }
+	  printf("File >senasic_app_snp736.bin< was opened success\n");
+
+	  memset(&readBuff[0], 0x00, 100);
+	  memset(&content[0], 0x00, 100);
+	  while(f_read(&fil, readBuff, 64, &bytesRead) == FR_OK){            // Читаем из файла 64 байта
+			 if(!i2c_read_data_from_device(0x36, f_addr, content, 66)){  // Читаем из памяти 66 байт
+				printf("error check\n");
+			    return FALSE;
+			 }
+
+			 // Сравниваем
+			 for(int i = 0; i < 64; i ++){
+				 if(readBuff[i] != content[i]){
+					 printf("expect/actual %02X %02X \n", readBuff[i], content[i]);
+					 print_hex("SD:", readBuff, 64);
+					 print_hex("SN:", content, 64);
+					 return FALSE;
+				 }
+			 }
+
+			 f_addr += 64;
+			 if(f_addr == 0x4000) return TRUE;
+	  }
+	  return TRUE;
+}
+
 static BOOLEAN reset_to_factory(void){
      // 1) write to 0x36 ack data: 0xA2 0x01 0x76 0x32
      uint8_t reset_cmd_1[4] = {0xA2, 0x01, 0x76, 0x32};
      if(!i2c_send_data_to_device(SNP_ADDR, &reset_cmd_1, 4)) return FALSE;
-
+     osDelay(100);
      // 2) write to 0x36 ack data: 0xA2, 0x02, 0x46, 0x51
      uint8_t reset_cmd_2[4] = {0xA2, 0x02, 0x46, 0x51};
      if(!i2c_send_data_to_device(SNP_ADDR, reset_cmd_2, 4)) return FALSE;
+     osDelay(100);
      return TRUE;
 }
 
@@ -128,8 +175,8 @@ extern BOOLEAN update_firmware(void){
     	return FALSE;
     }
     printf("Reset to factory was success\n");
-
-
+    osDelay(100);
+    prep_firmware();
     // Инит SD карты
     init_sd();
     // Чтение файла с SD карты и прошивка датчика
@@ -139,29 +186,27 @@ extern BOOLEAN update_firmware(void){
     }
 
     // Запись OPT
-    char opt_data[100] = {0x40, 0x00, sensor_number, 0x00, 0x00, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    // 0x40, 0x00, sensor_number, 0x00, 0x00, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    //  1     2         3          4     5     6     7     8      9    10    11    12    13    14    15    16    17    18    19    20    21    22    23    24    25    26    27    28    29    30    31    32    33    34    35    36    37    38    39   40     41    42    43    44    45   46     47    48    49    50    51    52    53    54    55   56     57    58    59    60    61    62     63    64   65    66
+    char opt_data[100] = {0x40, 0x00, sensor_number, 0x00, 0x00, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                       // 0x40, 0x00, sensor_number, 0x00, 0x00, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+                       //  1     2         3          4     5     6     7     8      9    10    11    12    13    14    15    16    17    18    19    20    21    22    23    24    25    26    27    28    29    30    31    32    33    34    35    36    37    38    39   40     41    42    43    44    45   46     47    48    49    50    51    52    53    54    55   56     57    58    59    60    61    62     63    64   65    66
     UINT8 opt_data_size = 66;
 
     crc16 = crc16_augccitt_false(&opt_data[0], opt_data_size);
     opt_data[opt_data_size] = crc16 >> 8;
     opt_data[opt_data_size + 1] = crc16;
 
+    // 0x40 0x00 0x02 0x00 0x00 0x09 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xF0 0x5C
+    //   1    2    3    4   5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60   61   62   63   64   65   66   67   68
     i2c_send_data_to_device(0x36, opt_data, opt_data_size + 2);
 
-
-    // Переключить в нормальный режим
-
-    // write to 0x36 ack data: 0x40 0x00
-    // read to 0x36 ack data: 0x00 0x00 0x00 0x08 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0x03 0x97
-    //                        1     2    3   4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60   61   62   63   64   65   66
-    // char buff[66];
-    // memset(&buff[0], 0x00, 66);
-    // i2c_read_data_from_device(0x36, 0x4000, buff, 66);
+    // Прочитать все записанные данные (0x0000 > 0x4000)
+    if(!check_firmware()){
+    	printf("error while check");
+    }
 
     printf("FW was finish\n");
-    finish_firmware();
+    osDelay(100);
+    prep_firmware();
     return TRUE;
 }
 
@@ -187,21 +232,22 @@ static BOOLEAN prep_firmware(void){
 		set_sda(GPIO_PIN_RESET);   // SDA off
 		set_scl(GPIO_PIN_RESET);   // SCL off
 		set_power(GPIO_PIN_RESET); // VDD off
-		osDelay(1000);
+		osDelay(500);
 	 	set_power(GPIO_PIN_SET);   // VDD on
 
 		// GPIO0(SCL) GPIO1(SDA) должны удерживаться в состояниий  GPIO1 = 1, GPIO0 = 0 не менее 256 мсек
 		set_sda(GPIO_PIN_RESET);    // SDA on
 		set_scl(GPIO_PIN_SET);  // SCL off
-		osDelay(2000);
+		osDelay(500);
 
 		// Перевод SDA/SCL пинов в режим I2C
 		switch_mode_sda_scl(I2C_M);
-		osDelay(1000);
+		osDelay(500);
 
 		// Убедиться, что на шине появилось устройство с адресом 0x36
-	    scan_bus_and_print();
-		return has_device(SNP_ADDR);
+	   // scan_bus_and_print();
+		//return has_device(SNP_ADDR);
+		return TRUE;
 }
 
 static BOOLEAN finish_firmware(void){
