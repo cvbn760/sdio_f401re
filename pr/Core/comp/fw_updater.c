@@ -19,9 +19,9 @@ static char *content;
 static UINT16 crc16;
 
 static uint8_t sensor_number = 2;
-SD_HandleTypeDef hsd;
-DMA_HandleTypeDef hdma_sdio_rx;
-DMA_HandleTypeDef hdma_sdio_tx;
+ SD_HandleTypeDef hsd;
+ DMA_HandleTypeDef hdma_sdio_rx;
+ DMA_HandleTypeDef hdma_sdio_tx;
 
 static void MX_DMA_Init(void);
 static void MX_SDIO_SD_Init(void);
@@ -73,42 +73,39 @@ static BOOLEAN read_sd_and_firmware(void){
 	  memset(&readBuff[0], 0x00, 100);
 	  memset(&content[0], 0x00, 100);
 	  while(f_read(&fil, readBuff, 64, &bytesRead) == FR_OK){
-		  if(bytesRead == 0) goto down; // Если ничего не прочитано
-        //  osDelay(20);
-		  // Добавляем адрес регистра
-		  content[0] = f_addr >> 8;
-		  content[1] = f_addr;
-		  memcpy(&content[2], &readBuff[0], bytesRead);
+	  if(bytesRead == 0) goto down; // Если ничего не прочитано
 
-		  if(f_addr == 0x1FC0){
-		 	 content[bytesRead + 1] = 0xEF;
-		 	 content[bytesRead] = 0xCD;
-		 	 content[bytesRead - 1] = 0xAB;
-		 	 //print_hex("SPC: ", content, bytesRead + 4);
-		 }
+	     // Добавляем адрес регистра
+	     content[0] = f_addr >> 8;
+	     content[1] = f_addr;
+	     memcpy(&content[2], &readBuff[0], bytesRead);
 
-		  // Добавляем контрольную сумму
-		  crc16 = crc16_augccitt_false(&content[0], bytesRead + 2);
-		  content[bytesRead + 2] = crc16 >> 8;
-		  content[bytesRead + 3] = crc16;
-		  //osDelay(100);
+	     if(f_addr == 0x1FC0){
+	        content[bytesRead + 1] = 0xEF;
+		    content[bytesRead] = 0xCD;
+		    content[bytesRead - 1] = 0xAB;
+	     }
 
-		  // Отправка
-		  if(!i2c_send_data_to_device(0x36, content, bytesRead + 4)) {
-			  print_hex("ERROR TO SEND: ", content, bytesRead + 4);
-			  return FALSE;
-		  }
+	     // Добавляем контрольную сумму
+	     crc16 = crc16_augccitt_false(&content[0], bytesRead + 2);
+	     content[bytesRead + 2] = crc16 >> 8;
+	     content[bytesRead + 3] = crc16;
 
-		  f_addr += bytesRead;
+	     // Отправка
+	     if(!i2c_send_data_to_device(0x36, content, bytesRead + 4)) {
+		    print_hex("ERROR TO SEND: ", content, bytesRead + 4);
+		    return FALSE;
+	     }
 
-		  memset(&readBuff[0], 0x00, 100);
-		  memset(&content[0], 0x00, 100);
+	     f_addr += bytesRead;
+
+	     memset(&readBuff[0], 0x00, 100);
+	     memset(&content[0], 0x00, 100);
 	  }
 	  down:
 
 	  // Закрытие файла
       f_close(&fil);
-      printf("ss");
       return TRUE;
 }
 
@@ -134,10 +131,20 @@ static BOOLEAN check_firmware(void){
 	  memset(&readBuff[0], 0x00, 100);
 	  memset(&content[0], 0x00, 100);
 	  while(f_read(&fil, readBuff, 64, &bytesRead) == FR_OK){            // Читаем из файла 64 байта
+		     if(f_addr == 0x1FC0){
+		    	 print_hex("PRINT before: ", readBuff, bytesRead);
+		    	 readBuff[bytesRead - 1] = 0xEF;
+		    	 readBuff[bytesRead - 2] = 0xCD;
+		    	 readBuff[bytesRead - 3] = 0xAB;
+		    	 print_hex("PRINT after: ", readBuff, bytesRead);
+		  	 }
+
 			 if(!i2c_read_data_from_device(0x36, f_addr, content, 66)){  // Читаем из памяти 66 байт
 				printf("error check\n");
 			    return FALSE;
 			 }
+
+//			 print_hex("PRINT content: ", content, 66);
 
 			 // Сравниваем
 			 for(int i = 0; i < 64; i ++){
@@ -204,15 +211,16 @@ extern BOOLEAN update_firmware(void){
     //   1    2    3    4   5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60   61   62   63   64   65   66   67   68
     i2c_send_data_to_device(0x36, opt_data, opt_data_size + 2);
 
-//    // Прочитать все записанные данные (0x0000 > 0x4000)
-//    if(!check_firmware()){
-//    	printf("error while check");
-//    }
-
-    printf("FW was finish\n");
-    osDelay(45);
-    finish_firmware();
-    return TRUE;
+    // Прочитать все записанные данные (0x0000 > 0x4000)
+    if(!check_firmware()){
+    	printf("error while check");
+    	return FALSE;
+    } else {
+    	printf("FW was finish\n");
+    	osDelay(45);
+    	finish_firmware();
+    	return TRUE;
+    }
 }
 
 /**
