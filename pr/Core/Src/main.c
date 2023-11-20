@@ -91,7 +91,7 @@ int main(void)
 {
 	HAL_Init();
     SystemClock_Config();
-	MX_USART2_UART_Init();
+	//MX_USART2_UART_Init();
     if(init_tasks()) printf("Tasks was initialized\n");
 	if(i2c_init()) printf("I2C1 was init success\n");
 

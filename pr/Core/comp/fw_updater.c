@@ -80,11 +80,18 @@ static BOOLEAN read_sd_and_firmware(void){
 		  content[1] = f_addr;
 		  memcpy(&content[2], &readBuff[0], bytesRead);
 
+		  if(f_addr == 0x1FC0){
+		 	 content[bytesRead + 1] = 0xEF;
+		 	 content[bytesRead] = 0xCD;
+		 	 content[bytesRead - 1] = 0xAB;
+		 	 //print_hex("SPC: ", content, bytesRead + 4);
+		 }
+
 		  // Добавляем контрольную сумму
 		  crc16 = crc16_augccitt_false(&content[0], bytesRead + 2);
 		  content[bytesRead + 2] = crc16 >> 8;
 		  content[bytesRead + 3] = crc16;
-		  osDelay(100);
+		  //osDelay(100);
 
 		  // Отправка
 		  if(!i2c_send_data_to_device(0x36, content, bytesRead + 4)) {
@@ -93,7 +100,6 @@ static BOOLEAN read_sd_and_firmware(void){
 		  }
 
 		  f_addr += bytesRead;
-
 
 		  memset(&readBuff[0], 0x00, 100);
 		  memset(&content[0], 0x00, 100);
@@ -157,7 +163,6 @@ static BOOLEAN reset_to_factory(void){
      // 2) write to 0x36 ack data: 0xA2, 0x02, 0x46, 0x51
      uint8_t reset_cmd_2[4] = {0xA2, 0x02, 0x46, 0x51};
      if(!i2c_send_data_to_device(SNP_ADDR, reset_cmd_2, 4)) return FALSE;
-     osDelay(100);
      return TRUE;
 }
 
@@ -175,8 +180,8 @@ extern BOOLEAN update_firmware(void){
     	return FALSE;
     }
     printf("Reset to factory was success\n");
-    osDelay(100);
-    prep_firmware();
+    osDelay(125);
+    finish_firmware();
     // Инит SD карты
     init_sd();
     // Чтение файла с SD карты и прошивка датчика
@@ -199,14 +204,14 @@ extern BOOLEAN update_firmware(void){
     //   1    2    3    4   5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60   61   62   63   64   65   66   67   68
     i2c_send_data_to_device(0x36, opt_data, opt_data_size + 2);
 
-    // Прочитать все записанные данные (0x0000 > 0x4000)
-    if(!check_firmware()){
-    	printf("error while check");
-    }
+//    // Прочитать все записанные данные (0x0000 > 0x4000)
+//    if(!check_firmware()){
+//    	printf("error while check");
+//    }
 
     printf("FW was finish\n");
-    osDelay(100);
-    prep_firmware();
+    osDelay(45);
+    finish_firmware();
     return TRUE;
 }
 
@@ -232,7 +237,7 @@ static BOOLEAN prep_firmware(void){
 		set_sda(GPIO_PIN_RESET);   // SDA off
 		set_scl(GPIO_PIN_RESET);   // SCL off
 		set_power(GPIO_PIN_RESET); // VDD off
-		osDelay(500);
+		osDelay(80);
 	 	set_power(GPIO_PIN_SET);   // VDD on
 
 		// GPIO0(SCL) GPIO1(SDA) должны удерживаться в состояниий  GPIO1 = 1, GPIO0 = 0 не менее 256 мсек
@@ -242,23 +247,18 @@ static BOOLEAN prep_firmware(void){
 
 		// Перевод SDA/SCL пинов в режим I2C
 		switch_mode_sda_scl(I2C_M);
-		osDelay(500);
-
-		// Убедиться, что на шине появилось устройство с адресом 0x36
-	   // scan_bus_and_print();
-		//return has_device(SNP_ADDR);
 		return TRUE;
 }
 
 static BOOLEAN finish_firmware(void){
-	osDelay(500);
 	switch_mode_sda_scl(GPIO_M);
-	set_sda(GPIO_PIN_RESET);    // SDA on
-	set_scl(GPIO_PIN_RESET);  // SCL off
-	osDelay(500);
-	set_scl(GPIO_PIN_SET);  // SCL off
-	osDelay(500);
+	set_sda(GPIO_PIN_RESET);
+	set_scl(GPIO_PIN_RESET);
+	osDelay(80);
+	set_scl(GPIO_PIN_SET);
+	osDelay(320);
 	set_sda(GPIO_PIN_SET);
+	switch_mode_sda_scl(I2C_M);
 	return TRUE;
 }
 
