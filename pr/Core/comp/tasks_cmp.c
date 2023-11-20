@@ -71,9 +71,14 @@ static void init_i2c_task(void *argument){
 			if(!is_start){
 				is_start = TRUE;
 				set_indication_task(1);
-				update_firmware();
+				if(update_firmware() == TRUE){
+					// Успешно
+					set_indication_task(2);
+				} else {
+					// Провально
+					set_indication_task(3);
+				}
 				is_start = FALSE;
-				set_indication_task(0);
 			}
 		}
 	}

@@ -286,8 +286,8 @@ static BOOLEAN prep_firmware(void){
 	 	set_power(GPIO_PIN_SET);   // VDD on
 
 		// GPIO0(SCL) GPIO1(SDA) должны удерживаться в состояниий  GPIO1 = 1, GPIO0 = 0 не менее 256 мсек
-		set_sda(GPIO_PIN_RESET);    // SDA on
-		set_scl(GPIO_PIN_SET);  // SCL off
+		set_sda(GPIO_PIN_RESET);   // SDA on
+		set_scl(GPIO_PIN_SET);     // SCL off
 		osDelay(500);
 
 		// Перевод SDA/SCL пинов в режим I2C

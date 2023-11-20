@@ -67,18 +67,17 @@ void start_init_task(void *argument);
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
-{
+int main(void) {
 	HAL_Init();
     SystemClock_Config();
     if(init_tasks()) printf("Tasks was initialized\n");
 	if(i2c_init()) printf("I2C1 was init success\n");
 
 	osKernelStart();
-     while (1){
-	  HAL_Delay(1000);
-	  printf("main cycle\n");
-     }
+    while (1){
+	    HAL_Delay(1000);
+	    printf("main cycle\n");
+    }
 }
 
 /**
