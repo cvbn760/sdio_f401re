@@ -43,23 +43,7 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
-
-UART_HandleTypeDef huart2;
-
 /* Definitions for sd_task */
-osThreadId_t sd_taskHandle;
-const osThreadAttr_t sd_task_attributes = {
-  .name = "sd_task",
-  .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityRealtime,
-};
-/* Definitions for init_task */
-osThreadId_t init_taskHandle;
-const osThreadAttr_t init_task_attributes = {
-  .name = "init_task",
-  .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityLow,
-};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -67,10 +51,6 @@ const osThreadAttr_t init_task_attributes = {
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-
-static void MX_USART2_UART_Init(void);
-
-static void MX_I2C1_Init(void);
 void start_sd_task(void *argument);
 void start_init_task(void *argument);
 
@@ -91,20 +71,14 @@ int main(void)
 {
 	HAL_Init();
     SystemClock_Config();
-	//MX_USART2_UART_Init();
     if(init_tasks()) printf("Tasks was initialized\n");
 	if(i2c_init()) printf("I2C1 was init success\n");
 
 	osKernelStart();
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+     while (1){
 	  HAL_Delay(1000);
-	  printf("test\n");
-  }
-  /* USER CODE END 3 */
+	  printf("main cycle\n");
+     }
 }
 
 /**
@@ -153,111 +127,7 @@ void SystemClock_Config(void)
   }
 }
 
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
 
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
-}
-
-
-/**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : BLUE_BUTTON_Pin */
-  GPIO_InitStruct.Pin = BLUE_BUTTON_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BLUE_BUTTON_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : GREEN_LED_Pin */
-  GPIO_InitStruct.Pin = GREEN_LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GREEN_LED_GPIO_Port, &GPIO_InitStruct);
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
-}
 
 /* USER CODE BEGIN 4 */
 int _write(int file, char *ptr, int len)
@@ -272,36 +142,6 @@ int _write(int file, char *ptr, int len)
 }
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_start_sd_task */
-/**
-  * @brief  Function implementing the sd_task thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_start_sd_task */
-void start_sd_task(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-
-
-  /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_start_init_task */
-/**
-* @brief Function implementing the init_task thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_start_init_task */
-void start_init_task(void *argument)
-{
-  /* USER CODE BEGIN start_init_task */
-  /* Infinite loop */
- sd_taskHandle = osThreadNew(start_sd_task, NULL, &sd_task_attributes);
-  /* USER CODE END start_init_task */
-}
 
 /**
   * @brief  This function is executed in case of error occurrence.
